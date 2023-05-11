@@ -22,8 +22,9 @@ class NeuMFModel(nn.Module):
             nn.ReLU(),
         )
         
-        self.neumf_layer = nn.Linear(in_features=64, out_features=self.num_ratings)
-        self.neumf_act = nn.Softmax(dim=1)
+        # self.neumf_layer = nn.Linear(in_features=64, out_features=self.num_ratings)
+        # self.neumf_act = nn.Softmax(dim=1)
+        self.neumf_layer = nn.Linear(in_features=64, out_features=1)
         
     def forward(self, user, movie):
         user_latent_vector = self.user_embedding(user)
@@ -40,7 +41,7 @@ class NeuMFModel(nn.Module):
         # neural MF
         neumf_input = torch.cat([gmf_output, mlp_output], dim=1)
         out = self.neumf_layer(neumf_input)
-        out = self.neumf_act(out)
+        # out = self.neumf_act(out)
         
         return out
     
