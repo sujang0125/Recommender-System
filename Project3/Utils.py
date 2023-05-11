@@ -7,3 +7,6 @@ embedding_dim = 8
 num_ratings = 9
 
 model_name = "param.data"
+load_saved_model = False
+epochs = 10000
+lr_rate = 0.001
