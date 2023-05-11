@@ -45,7 +45,8 @@ def train():
             
             # gradient를 0으로 초기화
             optimizer.zero_grad()
-            loss = criterion(output, y)
+            
+            loss = criterion(output, y_one_hot)
             # loss = criterion(output, y.to(torch.float32))
             
             # 비용 함수를 미분하여 gradient 계산
