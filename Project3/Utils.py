@@ -6,9 +6,10 @@ tags_path = "./data/tags.csv"
 embedding_dim = 8
 num_ratings = 9
 
-is_train = True
-
 # model_name = "param.data"
 model_name = "compare_rating_val"
 epochs = 500
 lr_rate = 0.001
+
+sim_k = 0.8
+second_sim_k = 0.6

@@ -35,6 +35,11 @@ class GetTrainData():
         self.max_user = max(self.set_user)
         self.max_movie = max(self.set_movie)
         self.num_ratings = len(set([r for r in self.df_ratings_train['rating']]))
+        
+        getsim = GetMovieSim()
+        simmv_set, second_simmv_set = getsim.define_similar_movie()
+        self.simmv_set = simmv_set
+        self.second_simmv_set = second_simmv_set
 
     def get_target_rating(self):
         print("length of user, movie : ", len(self.set_user), len(self.set_movie))
@@ -97,12 +102,14 @@ class GetMovieSim():
         self.df_movies_w_imgurl = pd.read_csv(Utils.movies_w_imgurl_path)
         self.df_tags = pd.read_csv(Utils.tags_path)
         self.df_ratings_train = pd.read_csv(Utils.ratings_train_path)
+        self.sim_k = Utils.sim_k
+        self.second_sim_k = Utils.second_sim_k
             
     def get_movie_info(self):
         # store the movie feature
-        movie_info = defaultdict(set)
-        movie_index = defaultdict(int)
-        index_movie = defaultdict(int)
+        movie_info = defaultdict(set) # {movie: [ genres and tags ... ]}
+        movie_index = defaultdict(int) # {movie: index}
+        index_movie = defaultdict(int) # {index: movie}
         
         # add genre information
         for i, row in self.df_movies_w_imgurl.iterrows():
@@ -135,7 +142,6 @@ class GetMovieSim():
         li = []
         for m in movie_info:
             feature = " ".join(movie_info[m])
-            print(movie_info[m], feature)
             li.append(feature)
         # get tf-idf
         tfidf_vectorizer = TfidfVectorizer()
@@ -146,5 +152,17 @@ class GetMovieSim():
         
         # get cossine similarity
         x_cossim = cosine_similarity(x_data, x_data)
-        return x_cossim
+        return x_cossim, movie_index, index_movie
         
+    def define_similar_movie(self):
+        x_cossim, movie_index, index_movie = self.get_movie_cossim()
+        simmv_set = defaultdict(set)
+        second_simmv_set = defaultdict(set)
+        
+        for i, movie_sim in enumerate(x_cossim):
+            movie = index_movie[i]
+            # 유사도가 높은 영화들을 비슷한 영화로 간주
+            simmv_set[movie] = [index_movie[k] for k, sim in enumerate(movie_sim.tolist()) if sim > self.sim_k] 
+            second_simmv_set[movie] = [index_movie[k] for k, sim in enumerate(movie_sim.tolist()) if sim <= self.sim_k and sim > self.second_sim_k]
+            # print(simmv_set[movie], len(simmv_set[movie]))
+        return simmv_set, second_simmv_set
