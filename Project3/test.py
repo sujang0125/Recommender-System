@@ -29,7 +29,7 @@ def test():
     
     mean_rmse = 0
     for data in val_data:
-        # data[0]: user, data[1]: movie, data[2]: real rating
+        # data[0]: user, data[1]: movie, data[2]: real rating value
         
         user = torch.tensor([data[0]])
         movie = torch.tensor([data[1]])
@@ -46,3 +46,51 @@ def test():
             mean_rmse += rmse
     mean_rmse = mean_rmse / len(val_data)
     print("mean_rmse:", mean_rmse)
+    
+def generate_output_txt():
+    # read input.txt
+    with open('./input.txt', 'r') as f:
+        input_data = [(int(s[0]), int(s[1])) for s in [l.strip().split(',') for l in f.readlines()]]
+    
+    print("Using CUDA ", torch.cuda.is_available())
+    print("CUDA device number ", torch.cuda.current_device())
+    print("CUDA device number ", torch.cuda.get_device_name(0))
+    traindata = GetTrainData()
+    max_user = traindata.max_user
+    max_movie = traindata.max_movie
+    num_ratings = traindata.num_ratings
+    
+    model = NeuMFModel(num_users=max_user+1, num_items=max_movie+1, num_ratings=num_ratings)
+    load_name = Utils.model_name
+    
+    try:
+        model.load_state_dict(torch.load("./" + load_name))
+    except FileNotFoundError as e:
+        print("model load failed")
+        print(e)
+        return False
+    
+    # model inference
+    result = []
+    for user, movie in input_data:
+        u = torch.tensor([user])
+        m = torch.tensor([movie])
+        with torch.no_grad():
+            model.eval()
+            output = model(u, m)
+            score = output.detach().cpu().numpy().item()
+            result.append((user, movie, score))
+            
+    # write to output file output.txt
+    prediction = []
+    for user, movie, score in result:
+        # print(user, movie, score)
+        prediction.append('{},{},{}'.format(int(user), int(movie), round(score, 8))) 
+          
+    print(prediction)
+    
+    with open('output.txt', 'w') as f:
+        for p in prediction:
+            f.write(p + "\n")
+    
+        

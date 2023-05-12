@@ -42,10 +42,10 @@ class GetTrainData():
         self.second_simmv_set = second_simmv_set
 
     def get_target_rating(self):
-        print("length of user, movie : ", len(self.set_user), len(self.set_movie))
-        print("max of user, movie : ", self.max_user, self.max_movie)
-        print("ratings_list : ", sorted(set([r for r in self.df_ratings_train['rating']])))
-        print("num_ratings : ", self.num_ratings)
+        print("length of user, movie : ", len(self.set_user), len(self.set_movie))              # 547 7357
+        print("max of user, movie : ", self.max_user, self.max_movie)                           # 671 94833
+        print("ratings_list : ", sorted(set([r for r in self.df_ratings_train['rating']])))     # [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+        print("num_ratings : ", self.num_ratings)                                               # 10
         
         # 한 유저가 내린 평점들의 평균
         user_avg_rating = {}
