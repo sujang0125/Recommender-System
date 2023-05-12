@@ -30,15 +30,15 @@ class NeuMFModel(nn.Module):
         user_latent_vector = self.user_embedding(user)
         movie_latent_vector = self.movie_embedding(movie)
         
-        # gmf
+        ### gmf
         gmf_input = torch.mul(user_latent_vector, movie_latent_vector)
         gmf_output = self.gmf_layer(gmf_input)
         
-        # mlp
+        ### mlp
         mlp_input = torch.cat([user_latent_vector, movie_latent_vector], dim=1)
         mlp_output = self.mlp_layer(mlp_input)
 
-        # neural MF
+        ### neural MF
         neumf_input = torch.cat([gmf_output, mlp_output], dim=1)
         out = self.neumf_layer(neumf_input)
         # out = self.neumf_act(out)

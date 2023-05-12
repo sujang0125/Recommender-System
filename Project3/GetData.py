@@ -39,22 +39,24 @@ class GetTrainData():
         getsim = GetMovieSim()
         simmv_set, second_simmv_set = getsim.define_similar_movie()
         self.simmv_set = simmv_set
-        self.second_simmv_set = second_simmv_set
+        self.second_simmv_set = second_simmv_set ### {movie: set[ (sim_movie, cossim_value)... ]}
 
     def get_target_rating(self):
-        print("length of user, movie : ", len(self.set_user), len(self.set_movie))              # 547 7357
-        print("max of user, movie : ", self.max_user, self.max_movie)                           # 671 94833
-        print("ratings_list : ", sorted(set([r for r in self.df_ratings_train['rating']])))     # [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-        print("num_ratings : ", self.num_ratings)                                               # 10
+        print("length of user, movie : ", len(self.set_user), len(self.set_movie))              ### 547 7357
+        print("max of user, movie : ", self.max_user, self.max_movie)                           ### 671 94833
+        print("ratings_list : ", sorted(set([r for r in self.df_ratings_train['rating']])))     ### [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+        print("num_ratings : ", self.num_ratings)                                               ### 10
         
-        # 한 유저가 내린 평점들의 평균
+        ### 한 유저가 내린 평점들의 평균
         user_avg_rating = {}
+        user_movieset = set()
         for u in self.set_user:
             u_rating_li = np.array(self.df_ratings_train.loc[(self.df_ratings_train['userId'] == u)]['rating'])
             avg_rating = np.sum(u_rating_li) / u_rating_li.shape[0] # user의 평균 rating
             user_avg_rating[u] = avg_rating
+            
         
-        # 유저 - 영화 rating을 dictionary로 {(user, movie): rating}, 길이는 ratings_train.csv의 줄 수
+        ### 유저 - 영화 rating을 dictionary로 {(user, movie): rating}, 길이는 ratings_train.csv의 줄 수
         user_movie_rating = {}
         for i, row in self.df_ratings_train.iterrows():
             user = int(row['userId'])
@@ -64,14 +66,15 @@ class GetTrainData():
         
         u_list, m_list, y_list = [], [], []
         for u in self.set_user:
+            
             for m in self.set_movie:
                 u_list.append(u)
                 m_list.append(m)
-                if (u, m) in user_movie_rating: # 유저 u가 영화 m에 rating을 했으면 해당 rating으로
+                if (u, m) in user_movie_rating: ### 유저 u가 영화 m에 rating을 했으면 해당 rating으로
                     y_list.append(user_movie_rating[(u, m)])
                 else: # 아닌 경우 유저가 내린 rating들의 평균으로 대체
                     y_list.append(user_avg_rating[u])
-                # else: # 0으로 대체
+                # else: ### 0으로 대체
                 #     y_list.append(int(0))
         return u_list, m_list, y_list
     
@@ -91,7 +94,7 @@ class GetValData():
             movie = int(row['movieId'])
             rating = row['rating']
             
-            # ratings_train.csv에서 보지 못한 유저나 영화는 고려 안 함
+            ### ratings_train.csv에서 보지 못한 유저나 영화는 고려 안 함
             if user not in self.get_train_data.set_user or movie not in self.get_train_data.set_movie:
                 continue
             val_data.append((user, movie, rating))
@@ -106,17 +109,17 @@ class GetMovieSim():
         self.second_sim_k = Utils.second_sim_k
             
     def get_movie_info(self):
-        # store the movie feature
+        ### store the movie feature
         movie_info = defaultdict(set) # {movie: [ genres and tags ... ]}
         movie_index = defaultdict(int) # {movie: index}
         index_movie = defaultdict(int) # {index: movie}
         
-        # add genre information
+        ### add genre information
         for i, row in self.df_movies_w_imgurl.iterrows():
             movie = int(row['movieId'])
             genres = row['genres'].split('|')
             for genre in genres:
-                ## in case of the (no genres listed)
+                ### in case of the (no genres listed)
                 # if genre == "(no genres listed)": 
                 #     movie_info[movie].append("")
                 #     continue
@@ -124,7 +127,7 @@ class GetMovieSim():
             index_movie[i] = movie
             movie_index[movie] = i
             
-        # add tag information
+        ### add tag information
         for i, row in self.df_tags.iterrows():
             movie = int(row['movieId'])
             tags = row['tag'].split(',')
@@ -143,14 +146,13 @@ class GetMovieSim():
         for m in movie_info:
             feature = " ".join(movie_info[m])
             li.append(feature)
-        # get tf-idf
+            
+        ### get tf-idf
         tfidf_vectorizer = TfidfVectorizer()
         tfidf_vectorizer.fit(li)
-        # print(tfidf_vectorizer.get_feature_names_out())
-        # print(tfidf_vectorizer.vocabulary_)
         x_data = tfidf_vectorizer.transform(li)
         
-        # get cossine similarity
+        ### get cossine similarity
         x_cossim = cosine_similarity(x_data, x_data)
         return x_cossim, movie_index, index_movie
         
@@ -161,8 +163,8 @@ class GetMovieSim():
         
         for i, movie_sim in enumerate(x_cossim):
             movie = index_movie[i]
-            # 유사도가 높은 영화들을 비슷한 영화로 간주
-            simmv_set[movie] = [index_movie[k] for k, sim in enumerate(movie_sim.tolist()) if sim > self.sim_k] 
-            second_simmv_set[movie] = [index_movie[k] for k, sim in enumerate(movie_sim.tolist()) if sim <= self.sim_k and sim > self.second_sim_k]
-            # print(simmv_set[movie], len(simmv_set[movie]))
+            ### 유사도가 높은 영화들을 비슷한 영화로 간주
+            simmv_set[movie] = [(index_movie[k], sim) for k, sim in enumerate(movie_sim.tolist()) if i != k and sim > self.sim_k] 
+            second_simmv_set[movie] = [(index_movie[k], sim) for k, sim in enumerate(movie_sim.tolist()) if i != k and (sim <= self.sim_k and sim > self.second_sim_k)]
+            print(simmv_set[movie], len(simmv_set[movie]))
         return simmv_set, second_simmv_set

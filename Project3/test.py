@@ -29,7 +29,7 @@ def test():
     
     mean_rmse = 0
     for data in val_data:
-        # data[0]: user, data[1]: movie, data[2]: real rating value
+        ### data[0]: user, data[1]: movie, data[2]: real rating value
         
         user = torch.tensor([data[0]])
         movie = torch.tensor([data[1]])
@@ -48,10 +48,11 @@ def test():
     print("mean_rmse:", mean_rmse)
     
 def generate_output_txt():
-    # read input.txt
+    ### read input.txt
     with open('./input.txt', 'r') as f:
         input_data = [(int(s[0]), int(s[1])) for s in [l.strip().split(',') for l in f.readlines()]]
     
+    ### model define
     print("Using CUDA ", torch.cuda.is_available())
     print("CUDA device number ", torch.cuda.current_device())
     print("CUDA device number ", torch.cuda.get_device_name(0))
@@ -70,7 +71,7 @@ def generate_output_txt():
         print(e)
         return False
     
-    # model inference
+    ### model inference
     result = []
     for user, movie in input_data:
         u = torch.tensor([user])
@@ -81,13 +82,11 @@ def generate_output_txt():
             score = output.detach().cpu().numpy().item()
             result.append((user, movie, score))
             
-    # write to output file output.txt
+    ### write to output file output.txt
     prediction = []
     for user, movie, score in result:
         # print(user, movie, score)
         prediction.append('{},{},{}'.format(int(user), int(movie), round(score, 8))) 
-          
-    print(prediction)
     
     with open('output.txt', 'w') as f:
         for p in prediction:
