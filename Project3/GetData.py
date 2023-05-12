@@ -3,6 +3,8 @@ import numpy as np
 import time
 import torch
 from torch.utils.data import Dataset
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 import Utils
 from collections import Counter, defaultdict
@@ -89,32 +91,60 @@ class GetValData():
                 continue
             val_data.append((user, movie, rating))
         return val_data
-    
-# class GetTagInfo():
-#     def __init__(self) -> None:
-#         self.df_tags = pd.read_csv(Utils.tags_path)
+
+class GetMovieSim():
+    def __init__(self) -> None:
+        self.df_movies_w_imgurl = pd.read_csv(Utils.movies_w_imgurl_path)
+        self.df_tags = pd.read_csv(Utils.tags_path)
+        self.df_ratings_train = pd.read_csv(Utils.ratings_train_path)
+            
+    def get_movie_info(self):
+        # store the movie feature
+        movie_info = defaultdict(set)
+        movie_index = defaultdict(int)
+        index_movie = defaultdict(int)
         
-#     def get_tag_info(self):
-#         userset = set()
-#         movieset = set()
-#         tagset = set()
-#         user_tag_list = defaultdict(set)
-#         movie_tag_list = defaultdict(set)
-#         for i, row in self.df_tags.iterrows():
-#             user = int(row['userId'])
-#             movie = int(row['movieId'])
-#             tags = row['tag'].split(',')
-#             if len(tags) > 1:
-#                 print(tags)
-#             for tag in tags:
-#                 tagset.add(tag)
-#                 movie_tag_list[movie].add(tag)
-#                 user_tag_list[user].add(tag)
-#             userset.add(user)
-#             movieset.add(movie)
-#         # print(tagset)
-#         # print(len(tagset))
-#         # print(len(movieset))
-#         # print(len(userset))
-#         print(movie_tag_list)
+        # add genre information
+        for i, row in self.df_movies_w_imgurl.iterrows():
+            movie = int(row['movieId'])
+            genres = row['genres'].split('|')
+            for genre in genres:
+                ## in case of the (no genres listed)
+                # if genre == "(no genres listed)": 
+                #     movie_info[movie].append("")
+                #     continue
+                movie_info[movie].add(genre.replace(" ", "").lower()) # remove blank & lower case just in case
+            index_movie[i] = movie
+            movie_index[movie] = i
+            
+        # add tag information
+        for i, row in self.df_tags.iterrows():
+            movie = int(row['movieId'])
+            tags = row['tag'].split(',')
+            for tag in tags:
+                movie_info[movie].add(tag.replace(" ", "").lower()) # remove blank & lower case just in case
                 
+        for m in movie_info:
+            movie_info[m] = sorted(list(movie_info[m]))
+        # for m in movie_info:
+        #     print(m, movie_info[m])
+        return movie_info, movie_index, index_movie
+            
+    def get_movie_cossim(self):
+        movie_info, movie_index, index_movie = self.get_movie_info()
+        li = []
+        for m in movie_info:
+            feature = " ".join(movie_info[m])
+            print(movie_info[m], feature)
+            li.append(feature)
+        # get tf-idf
+        tfidf_vectorizer = TfidfVectorizer()
+        tfidf_vectorizer.fit(li)
+        # print(tfidf_vectorizer.get_feature_names_out())
+        # print(tfidf_vectorizer.vocabulary_)
+        x_data = tfidf_vectorizer.transform(li)
+        
+        # get cossine similarity
+        x_cossim = cosine_similarity(x_data, x_data)
+        return x_cossim
+        

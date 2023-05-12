@@ -83,3 +83,5 @@ def train():
         loss_file.close()
         torch.save(model.state_dict(), "./" + save_name)
     
+if __name__=="__main__":
+    train()
