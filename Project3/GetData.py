@@ -58,24 +58,51 @@ class GetTrainData():
         
         ### 유저 - 영화 rating을 dictionary로 {(user, movie): rating}, 길이는 ratings_train.csv의 줄 수
         user_movie_rating = {}
+        mv_per_user = defaultdict(set)
         for i, row in self.df_ratings_train.iterrows():
             user = int(row['userId'])
             movie = int(row['movieId'])
             rating = row['rating']
             user_movie_rating[(user, movie)] = rating
+            mv_per_user[user].add(movie)
         
         u_list, m_list, y_list = [], [], []
         for u in self.set_user:
-            
             for m in self.set_movie:
                 u_list.append(u)
                 m_list.append(m)
                 if (u, m) in user_movie_rating: ### 유저 u가 영화 m에 rating을 했으면 해당 rating으로
                     y_list.append(user_movie_rating[(u, m)])
-                else: # 아닌 경우 유저가 내린 rating들의 평균으로 대체
-                    y_list.append(user_avg_rating[u])
-                # else: ### 0으로 대체
-                #     y_list.append(int(0))
+                else:  
+                    flag = 0
+                    if flag == 0:
+                        for simmv in self.simmv_set[m]: # rating이 없는 영화는 그 영화와 가장 비슷한 영화의 평점으로
+                            if simmv in mv_per_user[u]:
+                                y_list.append(user_movie_rating[(u, simmv)])
+                                flag = 1
+                                break
+                    # if flag == 0:
+                    #     for simmv in self.second_simmv_set[m]: # rating이 없는 영화는 그 영화와 두 번째로 비슷한 영화의 평점으로
+                    #         if simmv in mv_per_user[u]:
+                    #             r = user_movie_rating[(u, simmv)]
+                    #             y_list.append(r)
+                    #             # if r > 2.5:
+                    #             #     y_list.append(r * 0.9)
+                    #             # else:
+                    #             #     y_list.append(r * 1.1)
+                    #             flag = 1
+                    #             break
+                    if flag == 0: # 비슷한 영화도 없으면 그냥 유저가 내린 rating들의 평균으로 대체
+                        y_list.append(user_avg_rating[u])
+                        flag = 1
+                    
+                    if flag == 0:
+                        print("there are no y value >>> error occured")
+                        return
+                    # 아닌 경우 유저가 내린 rating들의 평균으로 대체
+                    # y_list.append(user_avg_rating[u])
+                    # 아닌 경우 0으로 대체
+                    # y_list.append(int(0))
         return u_list, m_list, y_list
     
     
@@ -160,11 +187,14 @@ class GetMovieSim():
         x_cossim, movie_index, index_movie = self.get_movie_cossim()
         simmv_set = defaultdict(set)
         second_simmv_set = defaultdict(set)
-        
+        cnt, scnt = 0, 0
         for i, movie_sim in enumerate(x_cossim):
             movie = index_movie[i]
             ### 유사도가 높은 영화들을 비슷한 영화로 간주
-            simmv_set[movie] = [(index_movie[k], sim) for k, sim in enumerate(movie_sim.tolist()) if i != k and sim > self.sim_k] 
+            movie_sim_pair = [(index_movie[k], sim) for k, sim in enumerate(movie_sim.tolist()) if i != k and sim > self.sim_k]
+            
+            # 영화와 비슷한 영화들을 similarity가 큰 순서대로 정렬
+            simmv_set[movie] = sorted(movie_sim_pair, reverse=True, key=lambda x: x[1])
             second_simmv_set[movie] = [(index_movie[k], sim) for k, sim in enumerate(movie_sim.tolist()) if i != k and (sim <= self.sim_k and sim > self.second_sim_k)]
-            print(simmv_set[movie], len(simmv_set[movie]))
+            # print(simmv_set[movie], len(simmv_set[movie]))
         return simmv_set, second_simmv_set
