@@ -86,10 +86,6 @@ class GetTrainData():
                     #         if simmv in mv_per_user[u]:
                     #             r = user_movie_rating[(u, simmv)]
                     #             y_list.append(r)
-                    #             # if r > 2.5:
-                    #             #     y_list.append(r * 0.9)
-                    #             # else:
-                    #             #     y_list.append(r * 1.1)
                     #             flag = 1
                     #             break
                     if flag == 0: # 비슷한 영화도 없으면 그냥 유저가 내린 rating들의 평균으로 대체
@@ -99,9 +95,11 @@ class GetTrainData():
                     if flag == 0:
                         print("there are no y value >>> error occured")
                         return
-                    # 아닌 경우 유저가 내린 rating들의 평균으로 대체
+                    
+                    # # 아닌 경우 유저가 내린 rating들의 평균으로 대체
                     # y_list.append(user_avg_rating[u])
-                    # 아닌 경우 0으로 대체
+                    
+                    # # 아닌 경우 0으로 대체
                     # y_list.append(int(0))
         return u_list, m_list, y_list
     
@@ -195,6 +193,7 @@ class GetMovieSim():
             
             # 영화와 비슷한 영화들을 similarity가 큰 순서대로 정렬
             simmv_set[movie] = sorted(movie_sim_pair, reverse=True, key=lambda x: x[1])
-            second_simmv_set[movie] = [(index_movie[k], sim) for k, sim in enumerate(movie_sim.tolist()) if i != k and (sim <= self.sim_k and sim > self.second_sim_k)]
+            second_movie_sim_pair = [(index_movie[k], sim) for k, sim in enumerate(movie_sim.tolist()) if i != k and (sim <= self.sim_k and sim > self.second_sim_k)]
+            second_simmv_set[movie] = sorted(second_movie_sim_pair, reverse=True, key=lambda x: x[1])
             # print(simmv_set[movie], len(simmv_set[movie]))
         return simmv_set, second_simmv_set

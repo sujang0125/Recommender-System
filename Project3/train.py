@@ -58,11 +58,6 @@ def train():
             ### gradient를 0으로 초기화
             optimizer.zero_grad()
             
-            #### y rating을 one-hot으로
-            # y_one_hot = torch.zeros(output.shape[0], output.shape[1]).to(device)
-            # y_one_hot.scatter_(1, torch.unsqueeze(y,1), 1).to(device)
-            # loss = criterion(output, y_one_hot)
-            
             ### y와 output을 그냥 실수값으로 비교
             loss = criterion(torch.squeeze(output), y.to(torch.float32))
             # print(torch.squeeze(output), y.to(torch.float32))

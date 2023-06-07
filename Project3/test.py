@@ -3,6 +3,7 @@ from Model import NeuMFModel
 import Utils
 from GetData import GetValData, GetTrainData
 import numpy as np
+import matplotlib.pyplot as plt
 
 def test():
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -38,8 +39,6 @@ def test():
             model.eval()
             output = model(user, movie)
             output = output.detach().cpu().numpy()
-            # output = np.argmax(output)
-            # output = (output + 1)/2
             print(output, y)
             rmse = np.sqrt(np.mean((output - y)**2))
             print("rmse:",rmse)
@@ -92,4 +91,18 @@ def generate_output_txt():
         for p in prediction:
             f.write(p + "\n")
     
-        
+
+def loss_graph():
+    f=open(Utils.model_name + "_loss.txt","rt")
+    data = []
+    lines = f.readlines()
+    for line in lines:
+        data.append(float(line.rstrip()))
+
+    f.close()
+    
+    plt.plot(data)
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title(Utils.model_name + " losses", pad=10)
+    plt.show()

@@ -6,11 +6,12 @@ tags_path = "./data/tags.csv"
 embedding_dim = 8
 num_ratings = 9
 
-# model_name = "param.data"
-# model_name = "compare_rating_val"
-model_name = "replaced_simmv"
-epochs = 500
+model_name = "param.data"
+# model_name = "replaced_simmv"
+# model_name = "replace_user_avg"
+# model_name = "replace_zero"
+epochs = 100
 lr_rate = 0.001
 
-sim_k = 0.5
-second_sim_k = 0.6
+sim_k = 0.75
+second_sim_k = 0.5
